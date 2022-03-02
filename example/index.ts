@@ -9,17 +9,29 @@ xApp.get('/', r);
 
 const app = swaggerApp({ info: { title: 'My API', version: '1.0.0' } })(xApp);
 
-// app.get('/', (req, res) => {
-//   console.log(req.params);
-
-//   res.send({ a: 1 });
-// });
-
-app.post('/pet', { description: 'Add a new pet to the store' }, (req, res) => {
+app.get('/', (req, res) => {
   console.log(req.params);
 
   res.send({ a: 1 });
 });
+
+app.post(
+  '/pet',
+  {
+    description: 'Add a new pet to the store',
+    body: t.intersection([
+      t.type({ name: t.string, breed: t.string }),
+      t.partial({ color: t.string }),
+    ]),
+    // body: t.partial({ color: t.string }),
+  },
+  (req, res) => {
+    console.log(req.params);
+    console.log(req.body);
+
+    res.send({ a: 1 });
+  }
+);
 
 app.post(
   '/pet/:petId/uploadImage',

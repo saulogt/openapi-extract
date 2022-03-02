@@ -9,11 +9,11 @@ type OperationObjectParams<P extends t.Props> = {
   params?: t.TypeC<P>;
 };
 
-type OperationObjectReqBody<P extends t.Props> = {
-  body?: t.TypeC<P>;
+type OperationObjectReqBody<P extends t.Any = t.Any> = {
+  body?: P;
 };
-type OperationObjectResBody<P> = {
-  resp?: t.Type<P>;
+type OperationObjectResBody<P extends t.Any = t.Any> = {
+  resp?: P;
 };
 type OperationObjectQuery<P extends t.Props> = {
   query?: t.TypeC<P>;
@@ -21,9 +21,9 @@ type OperationObjectQuery<P extends t.Props> = {
 
 type OperationObject<
   P extends t.Props,
-  RS,
-  RQ extends t.Props,
-  Q extends t.Props
+  RS extends t.Any = t.Any,
+  RQ extends t.Any = t.Any,
+  Q extends t.Props = t.Props
 > = OperationObjectParams<P> &
   OperationObjectReqBody<RQ> &
   OperationObjectResBody<RS> &
@@ -37,16 +37,16 @@ interface IOverload {
   <
     Route extends string,
     P extends t.Props,
-    RS,
-    RQ extends t.Props,
+    RS extends t.Any,
+    RQ extends t.Any,
     Q extends t.Props
   >(
     route: Route,
     op: OperationObject<P, RS, RQ, Q>,
     handler: RequestHandler<
       t.TypeOf<t.TypeC<P>>,
-      t.TypeOf<t.Type<RS>>,
-      t.TypeOf<t.TypeC<RQ>>,
+      t.TypeOf<RS>,
+      t.TypeOf<RQ>,
       t.TypeOf<t.TypeC<Q>>
     >
   ): void;
@@ -75,30 +75,33 @@ const mkHandler =
   <
     Route extends string,
     P extends t.Props,
-    RS,
-    RQ extends t.Props,
-    Q extends t.Props
+    RS extends t.Any = t.Any,
+    RQ extends t.Any = t.Any,
+    Q extends t.Props = t.Props
   >(
     route: Route,
     opOrHandler:
       | OperationObject<P, RS, RQ, Q>
       | RequestHandler<
           t.TypeOf<t.TypeC<P>>,
-          t.TypeOf<t.Type<RS>>,
-          t.TypeOf<t.TypeC<RQ>>,
+          t.TypeOf<RS>,
+          t.TypeOf<RQ>,
           t.TypeOf<t.TypeC<Q>>
         >,
     handler?: RequestHandler<
       t.TypeOf<t.TypeC<P>>,
-      t.TypeOf<t.Type<RS>>,
-      t.TypeOf<t.TypeC<RQ>>,
+      t.TypeOf<RS>,
+      t.TypeOf<RQ>,
       t.TypeOf<t.TypeC<Q>>
     >
   ) => {
     const _handler = handler || (opOrHandler as NonNullable<typeof handler>);
-    const op = opOrHandler as OperationObject<P, RS, RQ, Q>;
-
-    // const currPath = joinPaths(expressWrapper.prefix, route);
+    const op = opOrHandler as OperationObject<
+      P,
+      RS,
+      RQ extends t.Any ? t.Any : never,
+      Q
+    >;
 
     expressWrapper.swagger.paths = expressWrapper.swagger.paths || [];
 
@@ -110,6 +113,7 @@ const mkHandler =
     });
 
     const paramsDecoder = op.params;
+    const bodyDecoder = op.body;
 
     expressWrapper.getExpress()[method](
       route,
@@ -119,6 +123,11 @@ const mkHandler =
         const paramDecoded = paramsDecoder?.decode(req.params);
         if (paramDecoded && isLeft(paramDecoded)) {
           res.status(400).send(paramDecoded.left as any);
+        }
+
+        const bodyDecoded = bodyDecoder?.decode(req.params);
+        if (bodyDecoded && isLeft(bodyDecoded)) {
+          res.status(400).send(bodyDecoded.left as any);
         }
 
         next();
