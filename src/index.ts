@@ -5,8 +5,8 @@ import { isLeft } from 'fp-ts/lib/Either';
 
 import { PathItem, Spec, Context, PathObj, Operation } from './swaggerTypes';
 
-type OperationObjectParams<P extends t.Props> = {
-  params?: t.TypeC<P>;
+type OperationObjectParams<P extends t.Any = t.Any> = {
+  params?: P;
 };
 
 type OperationObjectReqBody<P extends t.Any = t.Any> = {
@@ -15,15 +15,15 @@ type OperationObjectReqBody<P extends t.Any = t.Any> = {
 type OperationObjectResBody<P extends t.Any = t.Any> = {
   resp?: P;
 };
-type OperationObjectQuery<P extends t.Props> = {
-  query?: t.TypeC<P>;
+type OperationObjectQuery<P extends t.Any = t.Any> = {
+  query?: P;
 };
 
 type OperationObject<
-  P extends t.Props,
+  P extends t.Any = t.Any,
   RS extends t.Any = t.Any,
   RQ extends t.Any = t.Any,
-  Q extends t.Props = t.Props
+  Q extends t.Any = t.Any
 > = OperationObjectParams<P> &
   OperationObjectReqBody<RQ> &
   OperationObjectResBody<RS> &
@@ -36,18 +36,18 @@ type ExpressWrapper<T extends IRouter> = Context<T>;
 interface IOverload {
   <
     Route extends string,
-    P extends t.Props,
+    P extends t.Any,
     RS extends t.Any,
     RQ extends t.Any,
-    Q extends t.Props
+    Q extends t.Any
   >(
     route: Route,
     op: OperationObject<P, RS, RQ, Q>,
     handler: RequestHandler<
-      t.TypeOf<t.TypeC<P>>,
+      t.TypeOf<P>,
       t.TypeOf<RS>,
       t.TypeOf<RQ>,
-      t.TypeOf<t.TypeC<Q>>
+      t.TypeOf<Q>
     >
   ): void;
 
@@ -74,34 +74,24 @@ const mkHandler =
   ): IOverload =>
   <
     Route extends string,
-    P extends t.Props,
+    P extends t.Any = t.Any,
     RS extends t.Any = t.Any,
     RQ extends t.Any = t.Any,
-    Q extends t.Props = t.Props
+    Q extends t.Any = t.Any
   >(
     route: Route,
     opOrHandler:
       | OperationObject<P, RS, RQ, Q>
-      | RequestHandler<
-          t.TypeOf<t.TypeC<P>>,
-          t.TypeOf<RS>,
-          t.TypeOf<RQ>,
-          t.TypeOf<t.TypeC<Q>>
-        >,
+      | RequestHandler<t.TypeOf<P>, t.TypeOf<RS>, t.TypeOf<RQ>, t.TypeOf<Q>>,
     handler?: RequestHandler<
-      t.TypeOf<t.TypeC<P>>,
+      t.TypeOf<P>,
       t.TypeOf<RS>,
       t.TypeOf<RQ>,
-      t.TypeOf<t.TypeC<Q>>
+      t.TypeOf<Q>
     >
   ) => {
     const _handler = handler || (opOrHandler as NonNullable<typeof handler>);
-    const op = opOrHandler as OperationObject<
-      P,
-      RS,
-      RQ extends t.Any ? t.Any : never,
-      Q
-    >;
+    const op = opOrHandler as OperationObject<P, RS, RQ, Q>;
 
     expressWrapper.swagger.paths = expressWrapper.swagger.paths || [];
 
