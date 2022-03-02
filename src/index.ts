@@ -98,7 +98,15 @@ const mkHandler =
     expressWrapper.swagger.paths.push({
       path: route,
       item: {
-        [method]: { description: op.description || '' },
+        [method]: {
+          description: op.description || '',
+          validation: {
+            body: op.body,
+            params: op.params,
+            query: op.query,
+            resp: op.resp,
+          },
+        },
       },
     });
 
@@ -113,11 +121,13 @@ const mkHandler =
         const paramDecoded = paramsDecoder?.decode(req.params);
         if (paramDecoded && isLeft(paramDecoded)) {
           res.status(400).send(paramDecoded.left as any);
+          return;
         }
 
-        const bodyDecoded = bodyDecoder?.decode(req.params);
+        const bodyDecoded = bodyDecoder?.decode(req.body);
         if (bodyDecoded && isLeft(bodyDecoded)) {
           res.status(400).send(bodyDecoded.left as any);
+          return;
         }
 
         next();
@@ -274,6 +284,9 @@ function extractPaths(context: Context) {
         ) {
           // Workarround the type checker
           const o = p[fullPath][k as 'get'] as Operation;
+          const b = extractType(o.validation?.body);
+          console.log(b);
+
           o.tags = [...(o.tags || []), prefix];
         }
       });
@@ -300,4 +313,69 @@ const joinPaths = (path1: string, path2: string) => {
     path2 = path2.substring(1);
   }
   return path1 + path2;
+};
+
+// Extract json type from io-ts opject
+const extractType = (tp?: t.Any): any => {
+  if (!tp) return;
+
+  // tp.encode()
+  // const isit = t.exact(tp as any);
+
+  // if (t.name === 'Intersection') {
+  //   return t.types.map(extractType).join(' & ');
+  // }
+  // if (t.name === 'Union') {
+  //   return t.types.map(extractType).join(' | ');
+  // }
+  // if (t.name === 'Nullable') {
+  //   return extractType(t.type).replace(' | null', '');
+  // }
+  // if (t.name === 'Array') {
+  //   return `Array<${extractType(t.type)}>`;
+  // }
+  // if (t.name === 'StringLiteral') {
+  //   return t.value;
+  // }
+  // if (t.name === 'NumberLiteral') {
+  //   return t.value;
+  // }
+  // if (t.name === 'BooleanLiteral') {
+  //   return t.value;
+  // }
+  // if (t.name === 'Literal') {
+  //   return t.value;
+  // }
+  // if (t.name === 'TypeParameter') {
+  //   return t.name;
+  // }
+  // if (t.name === 'UnknownRecord') {
+  //   return 'any';
+  // }
+  // if (t.name === 'UnknownArray') {
+  //   return 'any[]';
+  // }
+  // if (t.name === 'Unknown') {
+  //   return 'any';
+  // }
+  // if (t.name === 'Null') {
+  //   return 'null';
+  // }
+  // if (t.name === 'Undefined') {
+  //   return 'undefined';
+  // }
+  // if (t.name === 'Never') {
+  //   return 'never';
+  // }
+  // if (t.name === 'UnknownString') {
+  //   return 'string';
+  // }
+  // if (t.name === 'UnknownNumber') {
+  //   return 'number';
+  // }
+  // if (t.name === 'UnknownBoolean') {
+  //   return 'boolean';
+  // }
+  // if (t.name === 'UnknownFunction') {
+  //   return 'Function';
 };

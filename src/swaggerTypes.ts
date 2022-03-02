@@ -1,4 +1,5 @@
 import { IRouter } from 'express';
+import * as t from 'io-ts';
 
 export interface Spec {
   info: {
@@ -97,4 +98,11 @@ export interface Operation {
   requestBody?: RequestBody;
   responses?: ResponseObject[];
   // security?:	Security[],
+
+  validation?: {
+    body?: t.Any;
+    query?: t.Any;
+    params?: t.Any;
+    resp?: t.Any;
+  };
 }

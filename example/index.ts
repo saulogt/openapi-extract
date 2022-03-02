@@ -4,10 +4,11 @@ import * as t from 'io-ts';
 
 const xApp = express();
 
-const r = express.Router();
-xApp.get('/', r);
+xApp.use(express.json());
 
 const app = swaggerApp({ info: { title: 'My API', version: '1.0.0' } })(xApp);
+
+// app.use(express.json());
 
 app.get('/', (req, res) => {
   console.log(req.params);
